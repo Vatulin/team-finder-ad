@@ -201,3 +201,32 @@ class ProfileEditForm(UniqueEmailMixin, forms.ModelForm):
             )
 
         return url
+
+class SkillAddForm(forms.Form):
+    skill_id = forms.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=9223372036854775807,
+    )
+    name = forms.CharField(
+        required=False,
+        max_length=124,
+        strip=True,
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.errors:
+            return cleaned_data
+
+        skill_id = cleaned_data.get("skill_id")
+        name = cleaned_data.get("name")
+
+        if bool(skill_id) == bool(name):
+            raise forms.ValidationError(
+                "Передайте либо ID существующего навыка, "
+                "либо название нового."
+            )
+
+        return cleaned_data

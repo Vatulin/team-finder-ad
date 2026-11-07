@@ -9,11 +9,23 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from team_finder.pagination import paginate_queryset
+from django.db import transaction
+from django.db.models.functions import Lower
+from django.http import JsonResponse
+from django.utils.html import escape
+from django.views.decorators.csrf import ensure_csrf_cookie
 
-from .forms import LoginForm, ProfileEditForm, RegistrationForm
-from .models import User
+import json
+
+from .forms import (
+    LoginForm,
+    ProfileEditForm,
+    RegistrationForm,
+    SkillAddForm,
+)
+from .models import Skill, User
 
 
 @sensitive_post_parameters("password")
@@ -80,8 +92,10 @@ def logout_view(request):
 
 
 @require_http_methods(["GET"])
+@ensure_csrf_cookie
 def profile_view(request, pk):
     users = User.objects.prefetch_related(
+        "skills",
         "owned_projects__participants",
     )
     profile_user = get_object_or_404(users, pk=pk)
@@ -151,3 +165,133 @@ def user_list_view(request):
         "users/participants.html",
         context,
     )
+
+def skill_error(message, status):
+    return JsonResponse(
+        {"status": "error", "message": message},
+        status=status,
+    )
+
+
+@require_http_methods(["GET"])
+def skill_search_view(request):
+    query = request.GET.get("q", "").strip()
+
+    if not query:
+        return JsonResponse([], safe=False)
+
+    skills = (
+        Skill.objects
+        .filter(name__istartswith=query)
+        .order_by(Lower("name"), "pk")
+        .values("id", "name")[:10]
+    )
+
+    return JsonResponse(list(skills), safe=False)
+
+
+@require_POST
+def skill_add_view(request, pk):
+    if not request.user.is_authenticated:
+        return skill_error("Необходимо войти в аккаунт.", 401)
+
+    if request.user.pk != pk:
+        return skill_error(
+            "Можно изменять навыки только своего профиля.",
+            403,
+        )
+
+    try:
+        payload = json.loads(request.body)
+    except (ValueError, UnicodeDecodeError):
+        return skill_error("Некорректный JSON.", 400)
+
+    if not isinstance(payload, dict):
+        return skill_error("Ожидается JSON-объект.", 400)
+
+    form = SkillAddForm(payload)
+
+    if not form.is_valid():
+        return JsonResponse(
+            {
+                "status": "error",
+                "errors": form.errors.get_json_data(),
+            },
+            status=400,
+        )
+
+    with transaction.atomic():
+        profile_user = (
+            User.objects.select_for_update()
+            .filter(pk=pk)
+            .first()
+        )
+
+        if profile_user is None:
+            return skill_error("Пользователь не найден.", 404)
+
+        skill_id = form.cleaned_data.get("skill_id")
+
+        if skill_id:
+            skill = Skill.objects.filter(pk=skill_id).first()
+
+            if skill is None:
+                return skill_error("Навык не найден.", 404)
+
+            created = False
+        else:
+            name = form.cleaned_data["name"]
+            skill, created = Skill.objects.get_or_create(
+                name__iexact=name,
+                defaults={"name": name},
+            )
+
+        added = not profile_user.skills.filter(pk=skill.pk).exists()
+
+        if added:
+            profile_user.skills.add(skill)
+
+    return JsonResponse({
+        "status": "ok",
+        "id": skill.pk,
+        "skill_id": skill.pk,
+        "name": str(escape(skill.name)),
+        "created": created,
+        "added": added,
+    })
+
+
+@require_POST
+def skill_remove_view(request, pk, skill_id):
+    if not request.user.is_authenticated:
+        return skill_error("Необходимо войти в аккаунт.", 401)
+
+    if request.user.pk != pk:
+        return skill_error(
+            "Можно изменять навыки только своего профиля.",
+            403,
+        )
+
+    with transaction.atomic():
+        profile_user = (
+            User.objects.select_for_update()
+            .filter(pk=pk)
+            .first()
+        )
+
+        if profile_user is None:
+            return skill_error("Пользователь не найден.", 404)
+
+        if not profile_user.skills.filter(pk=skill_id).exists():
+            return skill_error(
+                "Этот навык не добавлен в профиль.",
+                404,
+            )
+
+        profile_user.skills.remove(skill_id)
+
+    return JsonResponse({
+        "status": "ok",
+        "removed": True,
+        "skill_id": skill_id,
+    })

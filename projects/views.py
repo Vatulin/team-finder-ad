@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_POST
 from team_finder.pagination import paginate_queryset
+from django.contrib.auth import get_user_model
 
 from .forms import ProjectForm
 from .models import Project
@@ -170,8 +171,8 @@ def project_toggle_participate_view(request, pk):
         "status": "ok",
         "participant": participant,
     })
-
 @require_http_methods(["GET"])
+@ensure_csrf_cookie
 def project_list_view(request):
     projects = (
         Project.objects
@@ -188,3 +189,55 @@ def project_list_view(request):
         "projects/project_list.html",
         context,
     )
+
+@login_required
+@require_http_methods(["GET"])
+@ensure_csrf_cookie
+def favorite_projects_view(request):
+    projects = (
+        request.user.favorites
+        .select_related("owner")
+        .prefetch_related("participants")
+        .order_by("-created_at", "-pk")
+    )
+
+    return render(
+        request,
+        "projects/favorite_projects.html",
+        {"projects": projects},
+    )
+
+
+@require_POST
+def toggle_favorite_view(request, pk):
+    if not request.user.is_authenticated:
+        return json_error("Необходимо войти в аккаунт.", 401)
+
+    User = get_user_model()
+
+    with transaction.atomic():
+        user = (
+            User.objects.select_for_update()
+            .filter(pk=request.user.pk)
+            .first()
+        )
+
+        if user is None:
+            return json_error("Пользователь не найден.", 404)
+
+        project = Project.objects.filter(pk=pk).first()
+
+        if project is None:
+            return json_error("Проект не найден.", 404)
+
+        if user.favorites.filter(pk=project.pk).exists():
+            user.favorites.remove(project)
+            favorited = False
+        else:
+            user.favorites.add(project)
+            favorited = True
+
+    return JsonResponse({
+        "status": "ok",
+        "favorited": favorited,
+    })

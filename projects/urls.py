@@ -32,4 +32,14 @@ urlpatterns = [
         name="toggle_participate",
     ),
     path("list/", views.project_list_view, name="list"),
+        path(
+        "favorites/",
+        views.favorite_projects_view,
+        name="favorites",
+    ),
+    path(
+        "<int:pk>/toggle-favorite/",
+        views.toggle_favorite_view,
+        name="toggle_favorite",
+    ),
 ]

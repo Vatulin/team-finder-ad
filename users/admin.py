@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .forms import UserAdminChangeForm, UserAdminCreationForm
-from .models import User
+from .models import Skill, User
 
 
 @admin.register(User)
@@ -35,6 +35,7 @@ class UserAdmin(BaseUserAdmin):
                 "phone",
                 "github_url",
                 "about",
+                "skills",
             ),
         }),
         ("Права доступа", {
@@ -64,4 +65,9 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
-    filter_horizontal = ("groups", "user_permissions")
+    filter_horizontal = ("groups", "user_permissions", "skills")
+
+@admin.register(Skill)
+class SkillAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+    search_fields = ("name",)

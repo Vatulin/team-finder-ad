@@ -24,6 +24,31 @@ def normalize_phone(phone):
 
     return phone or None
 
+class Skill(models.Model):
+    name = models.CharField("Название", max_length=124)
+
+    class Meta:
+        verbose_name = "Навык"
+        verbose_name_plural = "Навыки"
+        ordering = [Lower("name"), "pk"]
+        constraints = [
+            models.UniqueConstraint(
+                Lower("name"),
+                name="users_skill_name_case_insensitive_unique",
+            ),
+        ]
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        super().clean()
+        self.name = self.name.strip()
+
+        if not self.name:
+            raise ValidationError(
+                {"name": "Название навыка не может быть пустым."}
+            )
 
 class User(AbstractUser):
     username = None
@@ -49,6 +74,18 @@ class User(AbstractUser):
     )
     github_url = models.URLField("Ссылка на GitHub", blank=True)
     about = models.TextField("О себе", max_length=256, blank=True)
+    skills = models.ManyToManyField(
+        Skill,
+        verbose_name="Навыки",
+        related_name="users",
+        blank=True,
+    )
+    favorites = models.ManyToManyField(
+    "projects.Project",
+    verbose_name="Избранные проекты",
+    related_name="interested_users",
+    blank=True,
+    )
 
     objects = UserManager()
 

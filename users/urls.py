@@ -17,4 +17,19 @@ urlpatterns = [
     ),
     path("<int:pk>/", views.profile_view, name="detail"),
     path("list/", views.user_list_view, name="list"),
+        path(
+        "skills/",
+        views.skill_search_view,
+        name="skill_search",
+    ),
+    path(
+        "<int:pk>/skills/add/",
+        views.skill_add_view,
+        name="skill_add",
+    ),
+    path(
+        "<int:pk>/skills/<int:skill_id>/remove/",
+        views.skill_remove_view,
+        name="skill_remove",
+    ),
 ]
