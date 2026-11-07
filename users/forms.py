@@ -132,7 +132,7 @@ class LoginForm(forms.Form):
 class ProfileEditForm(UniqueEmailMixin, forms.ModelForm):
     phone = forms.CharField(
         label="Телефон",
-        required=True,
+        required=False,
         max_length=12,
         validators=[phone_validator],
         widget=forms.TextInput(
@@ -168,7 +168,11 @@ class ProfileEditForm(UniqueEmailMixin, forms.ModelForm):
         }
 
     def clean_phone(self):
-        phone = normalize_phone(self.cleaned_data["phone"])
+        phone = normalize_phone(self.cleaned_data.get("phone"))
+
+        if phone is None:
+            return None
+
         users = User.objects.filter(phone=phone).exclude(
             pk=self.instance.pk,
         )

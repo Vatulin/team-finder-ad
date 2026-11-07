@@ -9,7 +9,7 @@ urlpatterns = [
     path(
         "",
         RedirectView.as_view(
-            pattern_name="users:login",
+            pattern_name="projects:list",
             permanent=False,
         ),
         name="home",

@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_POST
+from team_finder.pagination import paginate_queryset
 
 from .forms import ProjectForm
 from .models import Project
@@ -169,3 +170,21 @@ def project_toggle_participate_view(request, pk):
         "status": "ok",
         "participant": participant,
     })
+
+@require_http_methods(["GET"])
+def project_list_view(request):
+    projects = (
+        Project.objects
+        .select_related("owner")
+        .prefetch_related("participants")
+        .order_by("-created_at", "-pk")
+    )
+
+    context = paginate_queryset(request, projects)
+    context["projects"] = context["page_obj"].object_list
+
+    return render(
+        request,
+        "projects/project_list.html",
+        context,
+    )

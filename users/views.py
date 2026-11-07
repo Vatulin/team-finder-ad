@@ -9,7 +9,8 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_http_methods
+from team_finder.pagination import paginate_queryset
 
 from .forms import LoginForm, ProfileEditForm, RegistrationForm
 from .models import User
@@ -62,7 +63,7 @@ def login_view(request):
         ):
             return redirect(next_url)
 
-        return redirect("users:detail", pk=request.user.pk)
+        return redirect("projects:list")
 
     return render(
         request,
@@ -71,11 +72,11 @@ def login_view(request):
     )
 
 
-@require_POST
+@require_http_methods(["GET"])
 def logout_view(request):
     logout(request)
     messages.success(request, "Вы вышли из аккаунта.")
-    return redirect("users:login")
+    return redirect("projects:list")
 
 
 @require_http_methods(["GET"])
@@ -136,4 +137,17 @@ def change_password_view(request):
         request,
         "users/change_password.html",
         {"form": form},
+    )
+
+@require_http_methods(["GET"])
+def user_list_view(request):
+    users = User.objects.order_by("-date_joined", "-pk")
+
+    context = paginate_queryset(request, users)
+    context["participants"] = context["page_obj"].object_list
+
+    return render(
+        request,
+        "users/participants.html",
+        context,
     )

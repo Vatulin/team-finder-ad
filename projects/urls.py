@@ -31,4 +31,5 @@ urlpatterns = [
         views.project_toggle_participate_view,
         name="toggle_participate",
     ),
+    path("list/", views.project_list_view, name="list"),
 ]

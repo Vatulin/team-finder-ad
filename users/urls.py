@@ -16,4 +16,5 @@ urlpatterns = [
         name="change_password",
     ),
     path("<int:pk>/", views.profile_view, name="detail"),
+    path("list/", views.user_list_view, name="list"),
 ]
