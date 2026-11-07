@@ -10,6 +10,13 @@
 </head>
 <body data-page="{% block page_id %}default{% endblock %}">
 {% include 'includes/header.html' %}
+{% if messages %}
+<div class="container" aria-live="polite">
+    {% for message in messages %}
+        <p class="status-message">{{ message }}</p>
+    {% endfor %}
+</div>
+{% endif %}
 {% block content %}{% endblock %}
 <script src="{% static 'js/utils.js' %}"></script>
 <script src="{% static 'js/share.js' %}"></script>

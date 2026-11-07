@@ -113,3 +113,12 @@ span svg {
 .black-button-share svg {
     margin: 0;
 }
+
+.status-message {
+    margin: 16px 0;
+    padding: 12px 16px;
+    border: 1px solid #d4dfd6;
+    border-radius: 8px;
+    background: #edf5ef;
+    color: #23432c;
+}

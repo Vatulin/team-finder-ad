@@ -165,3 +165,26 @@
   opacity: 1;
   pointer-events: auto;
 }
+
+.sidebar-logout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    border: 0;
+    background: transparent;
+    color: #e7000b;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.sidebar-logout:hover {
+    background: #f5f5f5;
+}
+
+.sidebar-logout svg {
+    width: 20px;
+    height: 20px;
+}

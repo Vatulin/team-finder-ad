@@ -40,7 +40,7 @@ ROOT_URLCONF = "team_finder.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / f"templates_var{config('TASK_VERSION', default='1')}"],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -73,22 +73,65 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = []
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        ),
+        "OPTIONS": {
+            "user_attributes": ("email", "name", "surname"),
+        },
+    },
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "MinimumLengthValidator"
+        ),
+    },
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "CommonPasswordValidator"
+        ),
+    },
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "NumericPasswordValidator"
+        ),
+    },
+]
 if not DEBUG:
     AUTH_PASSWORD_VALIDATORS.extend(
         [
             {
-                "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-            },
-            {
-                "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-            },
-            {
-                "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-            },
-            {
-                "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-            },
+                    "NAME": (
+                        "django.contrib.auth.password_validation."
+                        "UserAttributeSimilarityValidator"
+                    ),
+                    "OPTIONS": {
+                        "user_attributes": ("email", "name", "surname"),
+                    },
+                },
+                {
+                    "NAME": (
+                        "django.contrib.auth.password_validation."
+                        "MinimumLengthValidator"
+                    ),
+                },
+                {
+                    "NAME": (
+                        "django.contrib.auth.password_validation."
+                        "CommonPasswordValidator"
+                    ),
+                },
+                {
+                    "NAME": (
+                        "django.contrib.auth.password_validation."
+                        "NumericPasswordValidator"
+                    ),
+                },
         ]
     )
 
@@ -120,3 +163,5 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.User"
+
+LOGIN_URL = "users:login"
