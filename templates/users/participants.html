@@ -17,6 +17,20 @@
         </div>
     </div>
 
+    <div class="skills-filter">
+        <span class="filter-label">Фильтр по навыкам:</span>
+        <div class="filter-chips">
+            {% for skill in all_skills %}
+            <a href="?skill={{ skill|urlencode }}"
+               class="filter-chip {% if active_skill == skill %}active{% endif %}">
+                {{ skill }}
+            </a>
+            {% endfor %}
+            {% if active_skill %}
+            <a href="/users/list" class="filter-reset">Сбросить</a>
+            {% endif %}
+        </div>
+    </div>
 
     {% if page_obj.object_list %}
     <div class="participants-grid">
@@ -59,7 +73,7 @@
     </div>
     {% endif %}
     {% else %}
-    {% include 'includes/empty-project-card.html' with empty_title="Пока нет участников" empty_message="На платформе пока нет зарегистрированных участников" button_link="/users/list" button_text="Обновить" %}
+    {% include 'includes/empty-project-card.html' with empty_title="Пока нет участников" empty_message="Попробуйте сбросить фильтр по навыкам" button_link="/users/list" button_text="Сбросить" %}
     {% endif %}
 </div>
 {% endblock %}

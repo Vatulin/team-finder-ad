@@ -155,21 +155,32 @@ def change_password_view(request):
 
 @require_http_methods(["GET"])
 def user_list_view(request):
+    active_skill = request.GET.get("skill", "").strip()
+
     users = User.objects.order_by("-date_joined", "-pk")
 
+    if active_skill:
+        users = users.filter(
+            skills__name=active_skill,
+        ).distinct()
+
+    all_skills = (
+        Skill.objects
+        .order_by(Lower("name"), "pk")
+        .values_list("name", flat=True)
+    )
+
     context = paginate_queryset(request, users)
-    context["participants"] = context["page_obj"].object_list
+    context.update({
+        "participants": context["page_obj"].object_list,
+        "all_skills": all_skills,
+        "active_skill": active_skill,
+    })
 
     return render(
         request,
         "users/participants.html",
         context,
-    )
-
-def skill_error(message, status):
-    return JsonResponse(
-        {"status": "error", "message": message},
-        status=status,
     )
 
 
